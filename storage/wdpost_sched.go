@@ -123,6 +123,7 @@ func (s *WindowPoStScheduler) Run(ctx context.Context) {
 			}
 
 			gotCur = false
+			log.Info("wdpost connect to venus successfully")
 		}
 
 		select {
