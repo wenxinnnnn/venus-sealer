@@ -346,6 +346,7 @@ func (l *LocalWorker) SealPreCommit2(ctx context.Context, sector storage.SectorR
 }
 
 func (l *LocalWorker) SealCommit1(ctx context.Context, sector storage.SectorRef, ticket abi.SealRandomness, seed abi.InteractiveSealRandomness, pieces []abi.PieceInfo, cids storage.SectorCids) (types.CallID, error) {
+	log.Info("LocalWorker  SealCommit1 ", sector.ID.Number)
 	sb, err := l.executor()
 	if err != nil {
 		return types.UndefCall, err

@@ -195,6 +195,7 @@ func (r *Remote) acquireFromRemote(ctx context.Context, s abi.SectorID, fileType
 		// TODO: see what we have local, prefer that
 
 		for _, url := range info.URLs {
+			log.Infof("%d try to fetch data %s save to %s", s.Number, fileType.String(), dest)
 			tempDest, err := tempFetchDest(dest, true)
 			if err != nil {
 				return "", err

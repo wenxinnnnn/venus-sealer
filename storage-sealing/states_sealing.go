@@ -175,7 +175,7 @@ func (m *Sealing) getTicket(ctx statemachine.Context, sector types.SectorInfo) (
 }
 
 func (m *Sealing) handleGetTicket(ctx statemachine.Context, sector types.SectorInfo) error {
-	isRecover, err:= m.isRecover(sector)
+	isRecover, err := m.isRecover(sector)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (m *Sealing) handleGetTicket(ctx statemachine.Context, sector types.SectorI
 }
 
 func (m *Sealing) handlePreCommit1(ctx statemachine.Context, sector types.SectorInfo) error {
-	isRecover, err:= m.isRecover(sector)
+	isRecover, err := m.isRecover(sector)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,6 @@ func (m *Sealing) handlePreCommit1(ctx statemachine.Context, sector types.Sector
 		/*if !bytes.Equal(pc1o, sector.PreCommit1Out) {
 			return ctx.Send(SectorSealPreCommit1Failed{fmt.Errorf("redo precommit1 %d fail out not equal receive %v expect %v", sector.SectorNumber, pc1o, sector.PreCommit1Out)})
 		}*/
-
 
 		return ctx.Send(SectorPreCommit1{
 			PreCommit1Out: pc1o,
@@ -297,13 +296,13 @@ func (m *Sealing) handlePreCommit2(ctx statemachine.Context, sector types.Sector
 		return ctx.Send(SectorSealPreCommit1Failed{xerrors.Errorf("seal pre commit(2) returned undefined CommD")})
 	}
 
-	isRecover, err:= m.isRecover(sector)
+	isRecover, err := m.isRecover(sector)
 	if err != nil {
 		return err
 	}
 	if isRecover {
 		log.Infof("recover %d precommit2 ", sector.SectorNumber.String())
-		if sector.CommR != nil &&!(*sector.CommR).Equals(cids.Sealed) {
+		if sector.CommR != nil && !(*sector.CommR).Equals(cids.Sealed) {
 			return ctx.Send(SectorSealPreCommit1Failed{xerrors.Errorf("commr not match %d %s %s", sector.SectorNumber, sector.CommR, cids.Sealed)})
 		}
 	}
@@ -416,7 +415,7 @@ func (m *Sealing) handlePreCommitting(ctx statemachine.Context, sector types.Sec
 
 	params, deposit, tok, err := m.preCommitParams(ctx, sector)
 	if params == nil || err != nil {
-		isRecover, err:= m.isRecover(sector)
+		isRecover, err := m.isRecover(sector)
 		if err != nil {
 			return err
 		}
@@ -426,7 +425,7 @@ func (m *Sealing) handlePreCommitting(ctx statemachine.Context, sector types.Sec
 			return ctx.Send(SectorCommitSubmitted{
 				Message: sector.CommitMessage,
 			})
-		}else{
+		} else {
 			return err
 		}
 	}
@@ -492,7 +491,7 @@ func (m *Sealing) handlePreCommitWait(ctx statemachine.Context, sector types.Sec
 		return ctx.Send(SectorChainPreCommitFailed{xerrors.Errorf("precommit message was nil")})
 	}
 
-	isRecover, err:= m.isRecover(sector)
+	isRecover, err := m.isRecover(sector)
 	if err != nil {
 		return err
 	}
@@ -528,7 +527,7 @@ func (m *Sealing) handlePreCommitWait(ctx statemachine.Context, sector types.Sec
 }
 
 func (m *Sealing) handleWaitSeed(ctx statemachine.Context, sector types.SectorInfo) error {
-	isRecover, err:= m.isRecover(sector)
+	isRecover, err := m.isRecover(sector)
 	if err != nil {
 		return err
 	}
@@ -627,6 +626,7 @@ func (m *Sealing) handleCommitting(ctx statemachine.Context, sector types.Sector
 		return ctx.Send(SectorComputeProofFailed{xerrors.Errorf("computing seal proof failed(1): %w", err)})
 	}
 
+	log.Infof("sector %d finish SealCommit1", sector.SectorNumber)
 	proof, err := m.sealer.SealCommit2(sector.SealingCtx(ctx.Context()), m.minerSector(sector.SectorType, sector.SectorNumber), c2in)
 	if err != nil {
 		return ctx.Send(SectorComputeProofFailed{xerrors.Errorf("computing seal proof failed(2): %w", err)})
@@ -785,7 +785,7 @@ func (m *Sealing) handleCommitWait(ctx statemachine.Context, sector types.Sector
 		return ctx.Send(SectorCommitFailed{xerrors.Errorf("entered commit wait with no commit cid")})
 	}
 
-	isRecover, err:= m.isRecover(sector)
+	isRecover, err := m.isRecover(sector)
 	if err != nil {
 		return err
 	}
@@ -868,9 +868,8 @@ func (m *Sealing) handleProvingSector(ctx statemachine.Context, sector types.Sec
 	return nil
 }
 
-
-func (m *Sealing)  isRecover(sector types.SectorInfo) (bool, error) {
-	if len(sector.TicketValue) > 0 && len(sector.PreCommitMessage)>0 &&len(sector.CommitMessage)>0 &&len(sector.Proof) >0  {
+func (m *Sealing) isRecover(sector types.SectorInfo) (bool, error) {
+	if len(sector.TicketValue) > 0 && len(sector.PreCommitMessage) > 0 && len(sector.CommitMessage) > 0 && len(sector.Proof) > 0 {
 		ctx := context.Background()
 		head, _, err := m.api.ChainHead(ctx)
 		if err != nil {

@@ -414,6 +414,7 @@ func (m *Manager) SealPreCommit2(ctx context.Context, sector storage.SectorRef, 
 }
 
 func (m *Manager) SealCommit1(ctx context.Context, sector storage.SectorRef, ticket abi.SealRandomness, seed abi.InteractiveSealRandomness, pieces []abi.PieceInfo, cids storage.SectorCids) (out storage.Commit1Out, err error) {
+	log.Info("Manager  SealCommit1 ", sector.ID.Number)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 

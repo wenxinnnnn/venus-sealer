@@ -217,6 +217,7 @@ func (mgr *SectorMgr) SealPreCommit2(ctx context.Context, sid storage.SectorRef,
 }
 
 func (mgr *SectorMgr) SealCommit1(ctx context.Context, sid storage.SectorRef, ticket abi.SealRandomness, seed abi.InteractiveSealRandomness, pieces []abi.PieceInfo, cids storage.SectorCids) (output storage.Commit1Out, err error) {
+	log.Info("SectorMgr  SealCommit1 ", sid.ID.Number)
 	mgr.lk.Lock()
 	ss, ok := mgr.sectors[sid.ID]
 	mgr.lk.Unlock()
