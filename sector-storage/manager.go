@@ -414,7 +414,7 @@ func (m *Manager) SealPreCommit2(ctx context.Context, sector storage.SectorRef, 
 }
 
 func (m *Manager) SealCommit1(ctx context.Context, sector storage.SectorRef, ticket abi.SealRandomness, seed abi.InteractiveSealRandomness, pieces []abi.PieceInfo, cids storage.SectorCids) (out storage.Commit1Out, err error) {
-	log.Info("Manager  SealCommit1 ", sector.ID.Number)
+	log.Info("Manager SealCommit1 ", sector.ID.Number)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -424,6 +424,7 @@ func (m *Manager) SealCommit1(ctx context.Context, sector storage.SectorRef, tic
 	}
 	defer cancel()
 
+	log.Infof("sector %d get worker %s", sector.ID.Number, wk.String())
 	var waitErr error
 	waitRes := func() {
 		p, werr := m.waitWork(ctx, wk)
@@ -437,6 +438,7 @@ func (m *Manager) SealCommit1(ctx context.Context, sector storage.SectorRef, tic
 	}
 
 	if wait { // already in progress
+		log.Infof("sector %d SealCommit1 already in progress")
 		waitRes()
 		return out, waitErr
 	}
@@ -450,7 +452,10 @@ func (m *Manager) SealCommit1(ctx context.Context, sector storage.SectorRef, tic
 	// generally very cheap / fast, and transferring data is not worth the effort
 	selector := newExistingSelector(m.index, sector.ID, storiface.FTCache|storiface.FTSealed, false)
 
+	log.Infof("Start Schedule sector %d worker SealCommit1", sector.ID.Number)
 	err = m.sched.Schedule(ctx, sector, types.TTCommit1, selector, m.schedFetch(sector, storiface.FTCache|storiface.FTSealed, storiface.PathSealing, storiface.AcquireMove), func(ctx context.Context, w Worker) error {
+		sid, _ := w.Session(ctx)
+		log.Infof("sector %d got worker %s", sector.ID.Number, sid)
 		err := m.startWork(ctx, w, wk)(w.SealCommit1(ctx, sector, ticket, seed, pieces, cids))
 		if err != nil {
 			return err
