@@ -63,6 +63,7 @@ func (s *existingSelector) Ok(ctx context.Context, task types.TaskType, spt abi.
 		}
 	}
 
+	log.Infof("worker %s has no sector data on %s", s.sector.Number, whnd.info.Hostname)
 	return false, nil
 }
 
