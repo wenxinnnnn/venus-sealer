@@ -345,6 +345,7 @@ func (sh *scheduler) trySched() {
 		3. Submit windows with scheduled tasks to workers
 
 	*/
+	log.Infof("try to sched task")
 
 	sh.workersLk.RLock()
 	defer sh.workersLk.RUnlock()
@@ -389,12 +390,13 @@ func (sh *scheduler) trySched() {
 				}
 
 				if !worker.enabled {
-					log.Debugw("skipping disabled worker", "worker", windowRequest.worker)
+					log.Warnf("skipping disabled worker", "worker", windowRequest.worker)
 					continue
 				}
 
 				// TODO: allow bigger windows
 				if !windows[wnd].allocated.canHandleRequest(needRes, windowRequest.worker, "schedAcceptable", worker.info) {
+					log.Warnf("%s cant handle work", windowRequest.worker.String())
 					continue
 				}
 
@@ -407,6 +409,7 @@ func (sh *scheduler) trySched() {
 				}
 
 				if !ok {
+					log.Warnf("unable to select task %s on worker %s", task.taskType.Short(), windowRequest.worker.String())
 					continue
 				}
 
