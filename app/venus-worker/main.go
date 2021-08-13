@@ -484,7 +484,7 @@ var runCmd = &cli.Command{
 			defer heartbeats.Stop()
 
 			var redeclareStorage bool
-			var readyCh chan struct{}
+		//	var readyCh chan struct{}
 			for {
 				// If we're reconnecting, redeclare storage first
 				if redeclareStorage {
@@ -502,11 +502,11 @@ var runCmd = &cli.Command{
 					}
 				}
 
-				// TODO: we could get rid of this, but that requires tracking resources for restarted tasks correctly
+			/*	// TODO: we could get rid of this, but that requires tracking resources for restarted tasks correctly
 				if readyCh == nil {
 					log.Info("Making sure no local tasks are running")
 					readyCh = waitQuietCh()
-				}
+				}*/
 
 				for {
 					curSession, err := nodeApi.Session(ctx)
@@ -519,17 +519,18 @@ var runCmd = &cli.Command{
 						}
 					}
 
+					if err := nodeApi.WorkerConnect(ctx, "http://"+address+"/rpc/v0"); err != nil {
+						log.Errorf("Registering worker failed: %+v", err)
+						cancel()
+						return
+					}
+
+					log.Info("Worker registered successfully, waiting for tasks")
+
 					select {
-					case <-readyCh: // 没有tasks后退出
-						if err := nodeApi.WorkerConnect(ctx, "http://"+address+"/rpc/v0"); err != nil {
-							log.Errorf("Registering worker failed: %+v", err)
-							cancel()
-							return
-						}
+					/*case <-readyCh: // 没有tasks后退出
 
-						log.Info("Worker registered successfully, waiting for tasks")
-
-						readyCh = nil
+						readyCh = nil*/
 					case <-heartbeats.C:
 					case <-ctx.Done():
 						return // graceful shutdown
