@@ -470,14 +470,14 @@ var runCmd = &cli.Command{
 			return xerrors.Errorf("getting miner session: %w", err)
 		}
 
-		waitQuietCh := func() chan struct{} {
+	/*	waitQuietCh := func() chan struct{} {
 			out := make(chan struct{})
 			go func() {
 				workerApi.LocalWorker.WaitQuiet()
 				close(out)
 			}()
 			return out
-		}
+		}*/
 
 		go func() {
 			heartbeats := time.NewTicker(stores.HeartbeatInterval)
