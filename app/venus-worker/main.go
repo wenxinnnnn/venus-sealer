@@ -521,8 +521,6 @@ var runCmd = &cli.Command{
 
 					if err := nodeApi.WorkerConnect(ctx, "http://"+address+"/rpc/v0"); err != nil {
 						log.Errorf("Registering worker failed: %+v", err)
-						cancel()
-						return
 					}
 
 					log.Info("Worker registered successfully, waiting for tasks")
