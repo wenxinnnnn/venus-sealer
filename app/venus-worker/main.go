@@ -194,7 +194,7 @@ var runCmd = &cli.Command{
 				return err
 			}
 		} else {
-		    // Update config.toml
+			// Update config.toml
 			err = config.UpdateConfig(cfg.ConfigPath, cfg)
 			if err != nil {
 				return err
@@ -394,15 +394,20 @@ var runCmd = &cli.Command{
 		wsts := service.NewWorkCallService(dbRepo, "worker")
 		//wsts := statestore.New(namespace.Wrap(ds, sealer.WorkerCallsPrefix))
 
+		localWorker := sectorstorage.NewLocalWorker(sectorstorage.WorkerConfig{
+			TaskTypes: taskTypes,
+			NoSwap:    cctx.Bool("no-swap"),
+		}, remote, localStore, nodeApi, nodeApi, wsts)
 		workerApi := &worker{
-			LocalWorker: sectorstorage.NewLocalWorker(sectorstorage.WorkerConfig{
-				TaskTypes: taskTypes,
-				NoSwap:    cctx.Bool("no-swap"),
-			}, remote, localStore, nodeApi, nodeApi, wsts),
-			localStore: localStore,
-			ls:         localStorage,
+			LocalWorker: localWorker,
+			localStore:  localStore,
+			ls:          localStorage,
 		}
 
+		localSession, err := localWorker.Session(ctx)
+		if err != nil {
+			return err
+		}
 		mux := mux.NewRouter()
 
 		log.Info("Setting up control endpoint at " + address)
@@ -470,7 +475,7 @@ var runCmd = &cli.Command{
 			return xerrors.Errorf("getting miner session: %w", err)
 		}
 
-	/*	waitQuietCh := func() chan struct{} {
+		/*	waitQuietCh := func() chan struct{} {
 			out := make(chan struct{})
 			go func() {
 				workerApi.LocalWorker.WaitQuiet()
@@ -484,7 +489,7 @@ var runCmd = &cli.Command{
 			defer heartbeats.Stop()
 
 			var redeclareStorage bool
-		//	var readyCh chan struct{}
+			//	var readyCh chan struct{}
 			for {
 				// If we're reconnecting, redeclare storage first
 				if redeclareStorage {
@@ -502,11 +507,11 @@ var runCmd = &cli.Command{
 					}
 				}
 
-			/*	// TODO: we could get rid of this, but that requires tracking resources for restarted tasks correctly
-				if readyCh == nil {
-					log.Info("Making sure no local tasks are running")
-					readyCh = waitQuietCh()
-				}*/
+				/*	// TODO: we could get rid of this, but that requires tracking resources for restarted tasks correctly
+					if readyCh == nil {
+						log.Info("Making sure no local tasks are running")
+						readyCh = waitQuietCh()
+					}*/
 
 				for {
 					curSession, err := nodeApi.Session(ctx)
@@ -519,16 +524,18 @@ var runCmd = &cli.Command{
 						}
 					}
 
-					if err := nodeApi.WorkerConnect(ctx, "http://"+address+"/rpc/v0"); err != nil {
-						log.Errorf("Registering worker failed: %+v", err)
+					workers, err := nodeApi.WorkerStats(ctx)
+					if _, ok := workers[localSession]; !ok {
+						if err := nodeApi.WorkerConnect(ctx, "http://"+address+"/rpc/v0"); err != nil {
+							log.Errorf("Registering worker failed: %+v", err)
+						}
+						log.Info("Worker registered successfully, waiting for tasks")
 					}
-
-					log.Info("Worker registered successfully, waiting for tasks")
 
 					select {
 					/*case <-readyCh: // 没有tasks后退出
 
-						readyCh = nil*/
+					readyCh = nil*/
 					case <-heartbeats.C:
 					case <-ctx.Done():
 						return // graceful shutdown
