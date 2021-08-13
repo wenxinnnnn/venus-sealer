@@ -528,8 +528,9 @@ var runCmd = &cli.Command{
 					if _, ok := workers[localSession]; !ok {
 						if err := nodeApi.WorkerConnect(ctx, "http://"+address+"/rpc/v0"); err != nil {
 							log.Errorf("Registering worker failed: %+v", err)
+						}else{
+							log.Info("Worker registered successfully, waiting for tasks")
 						}
-						log.Info("Worker registered successfully, waiting for tasks")
 					}
 
 					select {
