@@ -233,6 +233,7 @@ func (st *Local) open(ctx context.Context) error {
 	}
 
 	go st.reportHealth(ctx)
+	go st.refresh(ctx)
 
 	return nil
 }
@@ -330,6 +331,20 @@ func (st *Local) reportHealth(ctx context.Context) {
 	}
 }
 
+func (st *Local) refresh(ctx context.Context) {
+	// randomize interval by ~10%
+	interval := time.Second * 10
+
+	for {
+		select {
+		case <-time.After(interval):
+		case <-ctx.Done():
+			return
+		}
+
+		st.Redeclare(ctx)
+	}
+}
 func (st *Local) reportStorage(ctx context.Context) {
 	st.localLk.RLock()
 
