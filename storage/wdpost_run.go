@@ -811,7 +811,7 @@ func (s *WindowPoStScheduler) sectorsForProof(ctx context.Context, goodSectors, 
 	return proofSectors, nil
 }
 
-const RetrySubmitPoStCounts = 30
+const RetrySubmitPoStCounts = 10
 
 // submitPoStMessage builds a SubmitWindowedPoSt message and submits it to
 // the mpool. It doesn't synchronously block on confirmations, but it does
@@ -838,18 +838,16 @@ func (s *WindowPoStScheduler) submitPoStMessage(ctx context.Context, proof *mine
 		err error
 	)
 
-	for idx := 0; idx < RetrySubmitPoStCounts; idx++ {
-		if err = s.prepareMessage(ctx, msg, spec); err != nil {
-			log.Errorf("[%d] submitPoSt set sender failed: %v", idx+1, err)
-			time.Sleep(10 * time.Second)
-			continue
-		}
+	if err := s.prepareMessage(ctx, msg, spec); err != nil {
+		return "", err
+	}
 
+	for idx := 0; idx < RetrySubmitPoStCounts; idx++ {
 		// TODO: consider maybe caring about the output
 		uid, err = s.Messager.PushMessage(ctx, msg, &types3.MsgMeta{MaxFee: spec.MaxFee})
 		if err != nil {
 			log.Errorf("[%d] pushing SubmitWindowedPoSt message failed: %v", idx+1, err)
-			time.Sleep(10 * time.Second)
+			time.Sleep(30 * time.Second)
 			continue
 		}
 
@@ -896,8 +894,8 @@ func (s *WindowPoStScheduler) prepareMessage(ctx context.Context, msg *types.Mes
 	// block inclusion within the next 20 tipsets.
 	gm, err := s.api.GasEstimateMessageGas(ctx, msg, spec, types.EmptyTSK)
 	if err != nil {
-		log.Errorw("estimating gas", "error", err)
-		return nil
+		// log.Errorw("estimating gas", "error", err)
+		return err
 	}
 	*msg = *gm
 

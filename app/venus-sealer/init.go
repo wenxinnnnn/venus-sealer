@@ -220,7 +220,7 @@ var initCmd = &cli.Command{
 			return xerrors.Errorf("Remote API version didn't match (expected %s, remote %s)", constants.FullAPIVersion0, v.APIVersion)
 		}
 
-		log.Info("Initializing repo")
+		log.Info("Initializing message client")
 		messagerClient, closer, err := api.NewMessageRPC(&defaultCfg.Messager)
 		if err != nil {
 			return err
