@@ -5,11 +5,16 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"syscall"
+	"time"
 
+	logging "github.com/ipfs/go-log/v2"
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/go-state-types/abi"
 )
+
+var log = logging.Logger("storiface")
 
 const (
 	FTUnsealed SectorFileType = 1 << iota
@@ -133,19 +138,61 @@ func FileExists(fPath string) (bool, error) {
 	return false, err
 }
 
-
-func CopyFile(srcFile , dstFile string) error {
+func CopyFile(srcFile, dstFile string, srcLock, dstLock bool) error {
 	source, err := os.Open(srcFile)
 	if err != nil {
 		return err
 	}
 	defer source.Close()
 
+	if srcLock {
+		for {
+			err = syscall.Flock(int(source.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+			if err != nil {
+				log.Errorf("cannot flock [%s], %s", srcFile, err)
+				time.Sleep(time.Second * 5)
+			}
+			log.Infof("flock [%s]", srcFile)
+			break
+		}
+
+		defer func() {
+			err = syscall.Flock(int(source.Fd()), syscall.LOCK_UN)
+			if err != nil {
+				log.Errorf("cannot unlock [%s], %s", srcFile, err)
+			} else {
+				log.Infof("unflock [%s]", srcFile)
+			}
+		}()
+	}
+
 	destination, err := os.Create(dstFile)
 	if err != nil {
 		return err
 	}
 	defer destination.Close()
+
+	if dstLock {
+		for {
+			err = syscall.Flock(int(destination.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+			if err != nil {
+				log.Errorf("cannot flock [%s], %s", dstFile, err)
+				time.Sleep(time.Second * 5)
+			}
+
+			log.Infof("flock [%s]", dstFile)
+			break
+		}
+
+		defer func() {
+			err = syscall.Flock(int(destination.Fd()), syscall.LOCK_UN)
+			if err != nil {
+				log.Errorf("cannot unlock [%s], %s", dstFile, err)
+			} else {
+				log.Infof("unflock [%s]", dstFile)
+			}
+		}()
+	}
 
 	_, err = io.Copy(destination, source)
 

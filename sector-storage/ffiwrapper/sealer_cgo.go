@@ -199,7 +199,7 @@ func (sb *Sealer) AddPiece(ctx context.Context, sector storage.SectorRef, existi
 			if offset.Padded()+pieceSize.Padded() == maxPieceSize {
 				tUnsealedFile := storiface.DefaultUnsealedFile(ssize)
 				if bExist, _ := storiface.FileExists(tUnsealedFile); !bExist {
-					err = storiface.CopyFile(stagedPath.Unsealed, tUnsealedFile)
+					err = storiface.CopyFile(stagedPath.Unsealed, tUnsealedFile, false, true)
 					if err != nil {
 						return abi.PieceInfo{}, err
 					}
@@ -244,7 +244,7 @@ func (sb *Sealer) AddPiece(ctx context.Context, sector storage.SectorRef, existi
 	if offset.Padded()+pieceSize.Padded() == maxPieceSize {
 		tUnsealedFile := storiface.DefaultUnsealedFile(ssize)
 		if bExist, _ := storiface.FileExists(tUnsealedFile); !bExist {
-			err = storiface.CopyFile(stagedPath.Unsealed, tUnsealedFile)
+			err = storiface.CopyFile(stagedPath.Unsealed, tUnsealedFile, false, true)
 			if err != nil {
 				return abi.PieceInfo{}, err
 			}
@@ -512,7 +512,7 @@ func (sb *Sealer) SealPreCommit1(ctx context.Context, sector storage.SectorRef, 
 	log.Infof("pre commit1 paths: %v", paths)
 	if bExist, _ := storiface.FileExists(tUnsealedFile); bExist {
 		if bExist, _ := storiface.FileExists(paths.Unsealed); !bExist {
-			err = storiface.CopyFile(tUnsealedFile, paths.Unsealed)
+			err = storiface.CopyFile(tUnsealedFile, paths.Unsealed, true, false)
 			if err != nil {
 				return nil, err
 			}
